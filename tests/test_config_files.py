@@ -41,5 +41,5 @@ def test_settings_json_is_valid_and_complete() -> None:
     assert settings["max_releases_per_repository"] > 0
     assert settings["top_growth_limit"] > 0
     assert settings["request_timeout_seconds"] > 0
-    assert settings["max_retries"] >= 0
+    assert settings["max_attempts"] >= 1
     assert isinstance(settings["discovery_enabled"], bool)

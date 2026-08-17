@@ -2,9 +2,6 @@
 #
 # ghistory entrypoint.
 #
-# Deliberately thin: validate the environment, hand off to Python, propagate the
-# exit code. No data processing belongs here.
-#
 #   ./run.sh                    collect, analyze, report
 #   ./run.sh --dry-run          contact the API, write nothing
 #   ./run.sh --repair           overwrite an existing snapshot
