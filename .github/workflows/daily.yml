@@ -1,0 +1,74 @@
+name: Daily snapshot
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Observation date (YYYY-MM-DD). Defaults to today in UTC."
+        required: false
+        type: string
+      repair:
+        description: "Overwrite an existing snapshot for that date."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-snapshot
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: collect and commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Collect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_DATE: ${{ inputs.date }}
+          INPUT_REPAIR: ${{ inputs.repair }}
+        run: |
+          set -euo pipefail
+          # Fixing the date here keeps the snapshot and the commit message in
+          # agreement even if the run crosses midnight UTC.
+          observation_date="${INPUT_DATE:-$(date -u +%F)}"
+          echo "OBSERVATION_DATE=${observation_date}" >> "$GITHUB_ENV"
+
+          args=(--date "${observation_date}")
+          if [ "${INPUT_REPAIR:-false}" = "true" ]; then
+            args+=(--repair)
+          fi
+
+          ./run.sh "${args[@]}"
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add data reports
+          if git diff --cached --quiet; then
+            echo "Nothing changed; no commit."
+            exit 0
+          fi
+
+          git commit -m "data: ${OBSERVATION_DATE} snapshot"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
