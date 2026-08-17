@@ -8,8 +8,16 @@ from pathlib import Path
 from typing import Any
 
 from ghistory import __version__
+from ghistory.analyzer import (
+    Analysis,
+    AnalysisError,
+    analyze,
+    find_previous_snapshot,
+    load_snapshot,
+)
 from ghistory.collector import (
     ConfigError,
+    Settings,
     collect,
     load_repositories,
     load_settings,
@@ -17,6 +25,7 @@ from ghistory.collector import (
     write_snapshot,
 )
 from ghistory.github import GitHubClient, GitHubError
+from ghistory.report import report_path, write_report
 
 DEFAULT_CONFIG_DIR = Path("config")
 DEFAULT_DATA_DIR = Path("data")
@@ -62,6 +71,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="overwrite an existing snapshot for the date (off by default)",
     )
     parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="rebuild the report from stored snapshots without contacting the API",
+    )
+    parser.add_argument(
         "--config-dir",
         type=Path,
         default=DEFAULT_CONFIG_DIR,
@@ -89,12 +103,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.dry_run and args.repair:
         parser.error("--dry-run and --repair are mutually exclusive")
+    if args.report_only and (args.dry_run or args.repair):
+        parser.error("--report-only cannot be combined with --dry-run or --repair")
 
     observation_date = args.date or today_utc()
     destination = snapshot_path(args.data_dir, observation_date)
 
     print(f"ghistory {__version__}")
     print(f"Date: {observation_date.isoformat()}")
+
+    if args.report_only:
+        return rebuild_report(args, observation_date, destination)
 
     if destination.exists() and not args.repair and not args.dry_run:
         print(f"{destination} already exists. Nothing to do.")
@@ -125,11 +144,57 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("error: no repository could be collected; nothing written", file=sys.stderr)
         return 1
 
+    try:
+        analysis = build_analysis(snapshot, args.data_dir, observation_date, settings)
+    except AnalysisError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    print_growth(analysis)
+
     if args.dry_run:
         print("Dry run — nothing written.")
         return 0
 
     write_snapshot(snapshot, destination)
+    print(f"Wrote {destination}")
+
+    report_destination = report_path(args.reports_dir, observation_date)
+    write_report(analysis, report_destination)
+    print(f"Wrote {report_destination}")
+    return 0
+
+
+def build_analysis(
+    snapshot: dict[str, Any],
+    data_dir: Path,
+    observation_date: date,
+    settings: Settings,
+) -> Analysis:
+    previous_path = find_previous_snapshot(data_dir, observation_date)
+    previous = None if previous_path is None else load_snapshot(previous_path)
+    return analyze(snapshot, previous, top_growth_limit=settings.top_growth_limit)
+
+
+def rebuild_report(args: argparse.Namespace, observation_date: date, source: Path) -> int:
+    try:
+        settings = load_settings(args.config_dir / "settings.json")
+    except ConfigError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        snapshot = load_snapshot(source)
+        analysis = build_analysis(snapshot, args.data_dir, observation_date, settings)
+    except AnalysisError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    print_summary(snapshot)
+    print_growth(analysis)
+
+    destination = report_path(args.reports_dir, observation_date)
+    write_report(analysis, destination)
     print(f"Wrote {destination}")
     return 0
 
@@ -147,3 +212,19 @@ def print_summary(snapshot: dict[str, Any]) -> None:
             print(f"  - {entry['slug']} ({entry['error']})")
 
     print(f"Status: {snapshot['status'].upper()}")
+
+
+def print_growth(analysis: Analysis) -> None:
+    if analysis.previous_date is None:
+        print("No previous snapshot; growth starts with the next run.")
+        return
+
+    if analysis.top_growth:
+        print("Top growth:")
+        for rank, delta in enumerate(analysis.top_growth[:3], start=1):
+            change = delta.change("stars")
+            if change is not None:
+                print(f"  {rank}. {delta.full_name} +{change.delta:,} stars")
+
+    print(f"New releases: {len(analysis.new_releases)}")
+    print(f"Significant changes: {len(analysis.significant_changes)}")

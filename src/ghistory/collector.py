@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import tempfile
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -12,6 +10,7 @@ from typing import Any
 
 from ghistory import SCHEMA_VERSION, __version__
 from ghistory.github import GitHubClient, GitHubError
+from ghistory.storage import write_atomic
 
 SLUG_PATTERN = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 RELEASE_FIELDS = (
@@ -201,17 +200,7 @@ def render_snapshot(snapshot: dict[str, Any]) -> str:
 
 
 def write_snapshot(snapshot: dict[str, Any], path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    handle, temporary = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8") as stream:
-            stream.write(render_snapshot(snapshot))
-        # mkstemp creates at 0600, which os.replace would carry over.
-        os.chmod(temporary, 0o644)
-        os.replace(temporary, path)
-    except BaseException:
-        Path(temporary).unlink(missing_ok=True)
-        raise
+    write_atomic(path, render_snapshot(snapshot))
 
 
 def _iso_utc(moment: datetime) -> str:

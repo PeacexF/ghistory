@@ -61,6 +61,8 @@ def run(workspace: Path, *extra: str) -> int:
             str(workspace / "config"),
             "--data-dir",
             str(workspace / "data"),
+            "--reports-dir",
+            str(workspace / "reports"),
             *extra,
         ]
     )
@@ -96,11 +98,56 @@ def test_collection_writes_a_snapshot(workspace: Path, monkeypatch: pytest.Monke
     assert snapshot["repositories"][0]["stars"] == 112340
 
 
+def test_collection_writes_a_report(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    healthy_api(monkeypatch)
+
+    assert run(workspace) == 0
+
+    report = (workspace / "reports/2026/08/17.md").read_text(encoding="utf-8")
+    assert report.startswith("# ghistory — 2026-08-17")
+    assert "First observation" in report
+
+
 def test_dry_run_writes_nothing(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     healthy_api(monkeypatch)
 
     assert run(workspace, "--dry-run") == 0
     assert not (workspace / "data").exists()
+    assert not (workspace / "reports").exists()
+
+
+def test_a_second_day_reports_growth_against_the_first(
+    workspace: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    healthy_api(monkeypatch)
+    run(workspace)
+
+    stub_api(
+        monkeypatch,
+        make_response(200, repository_payload("owner/one", stargazers_count=112900)),
+        make_response(200, [release_payload("v2"), release_payload("v1")]),
+    )
+    assert (
+        main(
+            [
+                "--date",
+                "2026-08-18",
+                "--config-dir",
+                str(workspace / "config"),
+                "--data-dir",
+                str(workspace / "data"),
+                "--reports-dir",
+                str(workspace / "reports"),
+            ]
+        )
+        == 0
+    )
+
+    report = (workspace / "reports/2026/08/18.md").read_text(encoding="utf-8")
+    assert "Compared with 2026-08-17." in report
+    assert "+560" in report
+    assert "**owner/one** — [v2]" in report
 
 
 def test_an_existing_snapshot_is_not_recollected(
@@ -162,6 +209,37 @@ def test_a_partial_collection_is_still_recorded(
     snapshot = json.loads((workspace / "data/2026/08/17.json").read_text(encoding="utf-8"))
     assert snapshot["status"] == "partial"
     assert snapshot["counts"] == {"requested": 2, "ok": 1, "failed": 1}
+
+
+def test_a_report_can_be_rebuilt_from_a_stored_snapshot(
+    workspace: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    healthy_api(monkeypatch)
+    run(workspace)
+    (workspace / "reports/2026/08/17.md").unlink()
+
+    # No stubbed responses left: rebuilding must not touch the API.
+    stub_api(monkeypatch)
+    assert run(workspace, "--report-only") == 0
+    assert (workspace / "reports/2026/08/17.md").exists()
+
+
+def test_rebuilding_a_report_for_a_date_never_collected_fails(
+    workspace: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    stub_api(monkeypatch)
+
+    assert run(workspace, "--report-only") == 1
+    assert "no such file" in capsys.readouterr().err
+
+
+def test_report_only_refuses_to_combine_with_collection_flags() -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        main(["--report-only", "--repair"])
+    assert excinfo.value.code == 2
 
 
 def test_a_broken_config_is_reported_before_any_request(
