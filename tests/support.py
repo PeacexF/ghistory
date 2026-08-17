@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
+import pytest
 import requests
 from requests.adapters import BaseAdapter
 from requests.models import PreparedRequest, Response
 
+from ghistory.cli import main
 from ghistory.github import GitHubClient
 
 TOKEN = "test-token-not-a-real-credential"
@@ -97,6 +100,34 @@ def repository_payload(slug: str, **overrides: Any) -> dict[str, Any]:
     }
     payload.update(overrides)
     return payload
+
+
+def stub_api(monkeypatch: pytest.MonkeyPatch, *outcomes: Response | Exception) -> StubAdapter:
+    adapter = StubAdapter(outcomes)
+
+    def from_env(**kwargs: Any) -> GitHubClient:
+        session = requests.Session()
+        session.mount("https://", adapter)
+        return GitHubClient(TOKEN, session=session, sleep=lambda _: None, **kwargs)
+
+    monkeypatch.setattr(GitHubClient, "from_env", staticmethod(from_env))
+    return adapter
+
+
+def run_cli(workspace: Path, *extra: str, day: str = "2026-08-17") -> int:
+    return main(
+        [
+            "--date",
+            day,
+            "--config-dir",
+            str(workspace / "config"),
+            "--data-dir",
+            str(workspace / "data"),
+            "--reports-dir",
+            str(workspace / "reports"),
+            *extra,
+        ]
+    )
 
 
 def ok_entry(slug: str, **overrides: Any) -> dict[str, Any]:

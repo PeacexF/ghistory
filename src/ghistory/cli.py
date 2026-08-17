@@ -144,12 +144,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("error: no repository could be collected; nothing written", file=sys.stderr)
         return 1
 
-    try:
-        analysis = build_analysis(snapshot, args.data_dir, observation_date, settings)
-    except AnalysisError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
-
+    analysis = build_analysis(snapshot, args.data_dir, observation_date, settings)
     print_growth(analysis)
 
     if args.dry_run:
@@ -171,8 +166,14 @@ def build_analysis(
     observation_date: date,
     settings: Settings,
 ) -> Analysis:
+    previous = None
     previous_path = find_previous_snapshot(data_dir, observation_date)
-    previous = None if previous_path is None else load_snapshot(previous_path)
+    if previous_path is not None:
+        try:
+            previous = load_snapshot(previous_path)
+        except AnalysisError as exc:
+            # Today's observation must not be lost because an older file is unreadable
+            print(f"warning: {exc}; reporting without a comparison", file=sys.stderr)
     return analyze(snapshot, previous, top_growth_limit=settings.top_growth_limit)
 
 
