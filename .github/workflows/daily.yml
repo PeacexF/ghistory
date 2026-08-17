@@ -1,4 +1,4 @@
-name: Daily snapshot
+name: Daily snapshot [ghistory]
 
 on:
   schedule:

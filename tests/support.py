@@ -10,7 +10,7 @@ from requests.models import PreparedRequest, Response
 
 from ghistory.github import GitHubClient
 
-TOKEN = "ghp_notarealtoken"
+TOKEN = "test-token-not-a-real-credential"
 
 
 def make_response(
