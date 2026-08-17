@@ -5,7 +5,10 @@
 #   ./run.sh                    collect, analyze, report
 #   ./run.sh --dry-run          contact the API, write nothing
 #   ./run.sh --repair           overwrite an existing snapshot
-#   ./run.sh --date 2026-08-17  collect for a specific UTC date
+#   ./run.sh --report-only      rebuild the report from stored snapshots, no API calls
+#   ./run.sh --date 2026-08-17  use a specific UTC date
+#
+# Full reference: docs/configuration.md
 
 set -euo pipefail
 
