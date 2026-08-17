@@ -1,0 +1,75 @@
+# tracked repositories
+#
+# One `owner/name` per line. Blank lines and comments are ignored.
+
+# --- C / systems ---
+torvalds/linux
+git/git
+curl/curl
+redis/redis
+postgres/postgres
+php/php-src
+neovim/neovim
+
+# --- C++ ---
+llvm/llvm-project
+tensorflow/tensorflow
+electron/electron
+godotengine/godot
+ClickHouse/ClickHouse
+ggml-org/llama.cpp
+
+# --- Rust ---
+rust-lang/rust
+tokio-rs/tokio
+BurntSushi/ripgrep
+astral-sh/ruff
+denoland/deno
+
+# --- Go ---
+golang/go
+kubernetes/kubernetes
+moby/moby
+hashicorp/terraform
+grafana/grafana
+prometheus/prometheus
+gohugoio/hugo
+
+# --- Python ---
+python/cpython
+django/django
+pallets/flask
+psf/requests
+numpy/numpy
+pandas-dev/pandas
+scikit-learn/scikit-learn
+pytorch/pytorch
+home-assistant/core
+
+# --- JavaScript / TypeScript ---
+nodejs/node
+microsoft/TypeScript
+microsoft/vscode
+react/react
+vuejs/core
+angular/angular
+sveltejs/svelte
+vitejs/vite
+vercel/next.js
+
+# --- JVM ---
+spring-projects/spring-boot
+elastic/elasticsearch
+apache/kafka
+JetBrains/kotlin
+
+# --- Ruby ---
+rails/rails
+ruby/ruby
+
+# --- Other ecosystems ---
+dotnet/runtime
+swiftlang/swift
+ziglang/zig
+flutter/flutter
+docker/compose

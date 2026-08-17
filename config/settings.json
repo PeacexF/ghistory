@@ -1,0 +1,7 @@
+{
+  "max_releases_per_repository": 10,
+  "top_growth_limit": 10,
+  "discovery_enabled": false,
+  "request_timeout_seconds": 20,
+  "max_retries": 3
+}

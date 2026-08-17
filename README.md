@@ -1,8 +1,8 @@
-# GitHub Daily
+# ghistory
 
 A small automated archive of the GitHub ecosystem.
 
-Every day, GitHub Daily collects publicly available GitHub data, records it as a snapshot, and commits it to this repository.
+Every day, ghistory collects publicly available GitHub data, records it as a snapshot, and commits it to this repository.
 
 The goal is simple: **build a historical record of how GitHub changes over time.**
 
