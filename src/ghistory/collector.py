@@ -206,6 +206,8 @@ def write_snapshot(snapshot: dict[str, Any], path: Path) -> None:
     try:
         with os.fdopen(handle, "w", encoding="utf-8") as stream:
             stream.write(render_snapshot(snapshot))
+        # mkstemp creates at 0600, which os.replace would carry over.
+        os.chmod(temporary, 0o644)
         os.replace(temporary, path)
     except BaseException:
         Path(temporary).unlink(missing_ok=True)

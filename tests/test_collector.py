@@ -377,6 +377,13 @@ def test_writing_creates_directories_and_leaves_no_temporary_files(tmp_path: Pat
     assert list(destination.parent.iterdir()) == [destination]
 
 
+def test_a_written_snapshot_is_world_readable(tmp_path: Path) -> None:
+    destination = snapshot_path(tmp_path, DATE)
+    write_snapshot({"date": "2026-08-17"}, destination)
+
+    assert destination.stat().st_mode & 0o777 == 0o644
+
+
 def test_a_failed_write_leaves_the_previous_snapshot_intact(tmp_path: Path) -> None:
     destination = snapshot_path(tmp_path, DATE)
     write_snapshot({"date": "2026-08-17", "status": "complete"}, destination)

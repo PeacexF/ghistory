@@ -16,6 +16,13 @@ if ! command -v uv >/dev/null 2>&1; then
     exit 1
 fi
 
+if [ -f .env ]; then
+    set -a
+    # shellcheck source=/dev/null
+    . ./.env
+    set +a
+fi
+
 if [ -z "${GITHUB_TOKEN:-}" ]; then
     echo "error: GITHUB_TOKEN is not set" >&2
     echo "       export GITHUB_TOKEN=... (a token with public read access is enough)" >&2
