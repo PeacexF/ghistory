@@ -1,11 +1,22 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Any
 
 from ghistory import __version__
+from ghistory.collector import (
+    ConfigError,
+    collect,
+    load_repositories,
+    load_settings,
+    snapshot_path,
+    write_snapshot,
+)
+from ghistory.github import GitHubClient, GitHubError
 
 DEFAULT_CONFIG_DIR = Path("config")
 DEFAULT_DATA_DIR = Path("data")
@@ -80,8 +91,59 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--dry-run and --repair are mutually exclusive")
 
     observation_date = args.date or today_utc()
+    destination = snapshot_path(args.data_dir, observation_date)
 
     print(f"ghistory {__version__}")
     print(f"Date: {observation_date.isoformat()}")
-    print("Collector not implemented yet — nothing to do.")
+
+    if destination.exists() and not args.repair and not args.dry_run:
+        print(f"{destination} already exists. Nothing to do.")
+        return 0
+
+    try:
+        settings = load_settings(args.config_dir / "settings.json")
+        slugs = load_repositories(args.config_dir / "repositories.txt")
+    except ConfigError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        client = GitHubClient.from_env(
+            timeout=settings.request_timeout_seconds,
+            max_attempts=settings.max_attempts,
+        )
+    except GitHubError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    with client:
+        snapshot = collect(client, slugs, settings, observation_date=observation_date)
+
+    print_summary(snapshot)
+
+    if snapshot["counts"]["ok"] == 0:
+        print("error: no repository could be collected; nothing written", file=sys.stderr)
+        return 1
+
+    if args.dry_run:
+        print("Dry run — nothing written.")
+        return 0
+
+    write_snapshot(snapshot, destination)
+    print(f"Wrote {destination}")
     return 0
+
+
+def print_summary(snapshot: dict[str, Any]) -> None:
+    counts = snapshot["counts"]
+    print(f"Repositories: {counts['requested']}")
+    print(f"Successful:   {counts['ok']}")
+    print(f"Failed:       {counts['failed']}")
+
+    failures = [entry for entry in snapshot["repositories"] if entry["status"] == "error"]
+    if failures:
+        print("Failures:")
+        for entry in failures:
+            print(f"  - {entry['slug']} ({entry['error']})")
+
+    print(f"Status: {snapshot['status'].upper()}")

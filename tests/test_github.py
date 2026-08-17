@@ -1,80 +1,10 @@
 from __future__ import annotations
 
-import json
-from collections.abc import Mapping, Sequence
-from typing import Any
-
 import pytest
 import requests
-from requests.adapters import BaseAdapter
-from requests.models import PreparedRequest, Response
 
 from ghistory.github import GitHubClient, GitHubError, RateLimitError
-
-TOKEN = "ghp_notarealtoken"
-
-
-def make_response(
-    status: int,
-    body: Any = None,
-    headers: Mapping[str, str] | None = None,
-    *,
-    raw_body: str | None = None,
-) -> Response:
-    response = Response()
-    response.status_code = status
-    response.headers.update(headers or {})
-    text = raw_body if raw_body is not None else json.dumps(body)
-    response._content = text.encode()
-    return response
-
-
-class StubAdapter(BaseAdapter):
-    def __init__(self, outcomes: Sequence[Response | Exception]) -> None:
-        super().__init__()
-        self.outcomes = list(outcomes)
-        self.requests: list[PreparedRequest] = []
-        self.timeouts: list[Any] = []
-
-    def send(
-        self,
-        request: PreparedRequest,
-        stream: bool = False,
-        timeout: float | tuple[float, float] | tuple[float, None] | None = None,
-        verify: bool | str = True,
-        cert: Any = None,
-        proxies: Mapping[str, str] | None = None,
-    ) -> Response:
-        self.requests.append(request)
-        self.timeouts.append(timeout)
-        if not self.outcomes:
-            raise AssertionError("unexpected extra request")
-        outcome = self.outcomes.pop(0)
-        if isinstance(outcome, Exception):
-            raise outcome
-        outcome.request = request
-        outcome.url = request.url or ""
-        return outcome
-
-    def close(self) -> None:
-        return None
-
-
-def build_client(
-    outcomes: Sequence[Response | Exception],
-    **kwargs: Any,
-) -> tuple[GitHubClient, StubAdapter, list[float]]:
-    adapter = StubAdapter(outcomes)
-    session = requests.Session()
-    session.mount("https://", adapter)
-    slept: list[float] = []
-    client = GitHubClient(
-        TOKEN,
-        session=session,
-        sleep=slept.append,
-        **kwargs,
-    )
-    return client, adapter, slept
+from support import TOKEN, build_client, make_response
 
 
 def test_get_repository_returns_payload() -> None:
