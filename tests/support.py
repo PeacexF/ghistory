@@ -99,6 +99,56 @@ def repository_payload(slug: str, **overrides: Any) -> dict[str, Any]:
     return payload
 
 
+def ok_entry(slug: str, **overrides: Any) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "slug": slug,
+        "status": "ok",
+        "full_name": slug,
+        "description": "a description",
+        "language": "Rust",
+        "license": "MIT",
+        "default_branch": "main",
+        "topics": ["one", "two"],
+        "stars": 1000,
+        "forks": 100,
+        "open_issues": 10,
+        "subscribers": 50,
+        "size": 12345,
+        "archived": False,
+        "disabled": False,
+        "created_at": "2010-06-16T20:39:03Z",
+        "updated_at": "2026-08-16T23:51:00Z",
+        "pushed_at": "2026-08-16T23:48:00Z",
+        "releases": [],
+    }
+    entry.update(overrides)
+    return entry
+
+
+def error_entry(slug: str, error: str = "not_found") -> dict[str, Any]:
+    return {"slug": slug, "status": "error", "error": error}
+
+
+def snapshot(entries: list[dict[str, Any]], *, day: str = "2026-08-18") -> dict[str, Any]:
+    ok = sum(1 for entry in entries if entry["status"] == "ok")
+    failed = len(entries) - ok
+    if failed == 0:
+        status = "complete"
+    elif ok == 0:
+        status = "failed"
+    else:
+        status = "partial"
+    return {
+        "schema_version": 1,
+        "collector_version": "0.1.0",
+        "date": day,
+        "generated_at": f"{day}T00:04:21Z",
+        "status": status,
+        "counts": {"requested": len(entries), "ok": ok, "failed": failed},
+        "repositories": entries,
+    }
+
+
 def release_payload(tag: str, **overrides: Any) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "tag_name": tag,
