@@ -137,8 +137,8 @@ removals leave all past snapshots untouched. See
 
 ### Rate limit budget
 
-Each repository costs two requests, one for metadata and one for releases. At 54
-repositories that is 108 requests per run, against 5,000/hour for a personal token
+Each repository costs two requests, one for metadata and one for releases. At 72
+repositories that is 144 requests per run, against 5,000/hour for a personal token
 and 1,000/hour for the Actions token. There is a wide margin; you would need several
 hundred repositories before the daily run came close.
 

@@ -18,6 +18,8 @@ electron/electron
 godotengine/godot
 ClickHouse/ClickHouse
 ggml-org/llama.cpp
+duckdb/duckdb
+mongodb/mongo
 
 # --- Rust ---
 rust-lang/rust
@@ -25,6 +27,11 @@ tokio-rs/tokio
 BurntSushi/ripgrep
 astral-sh/ruff
 denoland/deno
+alacritty/alacritty
+biomejs/biome
+zed-industries/zed
+helix-editor/helix
+bevyengine/bevy
 
 # --- Go ---
 golang/go
@@ -34,6 +41,8 @@ hashicorp/terraform
 grafana/grafana
 prometheus/prometheus
 gohugoio/hugo
+ollama/ollama
+caddyserver/caddy
 
 # --- Python ---
 python/cpython
@@ -45,6 +54,9 @@ pandas-dev/pandas
 scikit-learn/scikit-learn
 pytorch/pytorch
 home-assistant/core
+huggingface/transformers
+langchain-ai/langchain
+comfyanonymous/ComfyUI
 
 # --- JavaScript / TypeScript ---
 nodejs/node
@@ -56,12 +68,14 @@ angular/angular
 sveltejs/svelte
 vitejs/vite
 vercel/next.js
+tailwindlabs/tailwindcss
 
 # --- JVM ---
 spring-projects/spring-boot
 elastic/elasticsearch
 apache/kafka
 JetBrains/kotlin
+gradle/gradle
 
 # --- Ruby ---
 rails/rails
@@ -69,7 +83,11 @@ ruby/ruby
 
 # --- Other ecosystems ---
 dotnet/runtime
+dotnet/aspnetcore
 swiftlang/swift
 ziglang/zig
 flutter/flutter
 docker/compose
+ghostty-org/ghostty
+oven-sh/bun
+laravel/laravel

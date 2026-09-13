@@ -76,9 +76,9 @@ and names the offending key.
 
 ### Snapshot size
 
-`max_releases_per_repository` is the main lever. At 10 releases across 54
-repositories a snapshot is roughly 195 KB, of which release objects are about 85%.
-Compressed in git that is around 23 KB per day — under 10 MB a year before git's
+`max_releases_per_repository` is the main lever. At 10 releases across 72
+repositories a snapshot is roughly 260 KB, of which release objects are about 85%.
+Compressed in git that is around 31 KB per day — under 12 MB a year before git's
 delta compression across near-identical consecutive days. Halving the release count
 roughly halves the file.
 

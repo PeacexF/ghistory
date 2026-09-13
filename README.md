@@ -8,7 +8,7 @@
 
 [![ci](https://img.shields.io/github/actions/workflow/status/PeacexF/ghistory/ci.yml?branch=main&label=ci&style=flat-square&labelColor=1c1c1c)](../../actions/workflows/ci.yml)
 [![daily snapshot](https://img.shields.io/github/actions/workflow/status/PeacexF/ghistory/daily.yml?branch=main&label=daily%20snapshot&style=flat-square&labelColor=1c1c1c)](../../actions/workflows/daily.yml)
-[![tracked](https://img.shields.io/badge/tracked-54%20repositories-F4553D?style=flat-square&labelColor=1c1c1c)](config/repositories.txt)
+[![tracked](https://img.shields.io/badge/tracked-72%20repositories-F4553D?style=flat-square&labelColor=1c1c1c)](config/repositories.txt)
 [![license](https://img.shields.io/github/license/PeacexF/ghistory?style=flat-square&labelColor=1c1c1c&color=F4553D)](LICENSE)
 
 [Browse the data](data) · [Read the reports](reports) · [Documentation](docs)
@@ -31,7 +31,7 @@ directory of dated JSON files that grows by one entry a day and is never rewritt
 
 ```mermaid
 flowchart LR
-    A(["03:00 UTC"]) --> B["Collect<br/>54 repositories"]
+    A(["03:00 UTC"]) --> B["Collect<br/>72 repositories"]
     B --> C[("data/YYYY/MM/DD.json<br/>immutable observation")]
     C --> D["Compare with<br/>the previous day"]
     D --> E["reports/YYYY/MM/DD.md<br/>what changed"]
@@ -130,7 +130,7 @@ Being clear about the limits is what makes the numbers worth keeping.
 - **An observation log, not GitHub's truth.** A value is what the collector saw at
   one moment on one day. A repository that went 10,000 → 10,500 → 10,200 between two
   runs is recorded as +200, and the spike is simply not in the data.
-- **54 repositories, not GitHub.** The list is [hand-picked](config/repositories.txt)
+- **72 repositories, not GitHub.** The list is [hand-picked](config/repositories.txt)
   and biased toward large, long-lived projects. Language counts describe *that set*
   and nothing wider.
 - **Missing data stays missing.** A repository that could not be fetched is stored
