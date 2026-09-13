@@ -56,7 +56,7 @@ pytorch/pytorch
 home-assistant/core
 huggingface/transformers
 langchain-ai/langchain
-comfyanonymous/ComfyUI
+Comfy-Org/ComfyUI
 
 # --- JavaScript / TypeScript ---
 nodejs/node
