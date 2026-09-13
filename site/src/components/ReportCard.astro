@@ -1,0 +1,105 @@
+---
+import { render } from 'astro:content';
+import type { ReportEntry, DayActivity } from '../lib/history';
+
+interface Props {
+  date: string;
+  entry: ReportEntry;
+  activity: DayActivity | null;
+}
+
+const { date, entry, activity } = Astro.props;
+const { Content } = await render(entry);
+
+const netLabel = activity
+  ? `${activity.netStars >= 0 ? '+' : ''}${activity.netStars.toLocaleString()}`
+  : null;
+---
+
+<article id={date} class="scroll-mt-6 border-b border-hairline py-4">
+  <header class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+    <h3 class="text-base font-medium">{date}</h3>
+    {
+      activity &&
+        (activity.status === 'failed' ? (
+          <span class="text-sm text-muted">collection failed</span>
+        ) : (
+          <span
+            class:list={['text-sm font-medium', activity.netStars >= 0 ? 'text-green' : 'text-muted']}
+          >
+            {netLabel} stars
+          </span>
+        ))
+    }
+  </header>
+
+  {
+    activity && activity.status !== 'failed' && (
+      <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+        <span>{activity.growingCount} growing</span>
+        <span>{activity.newReleaseCount} new releases</span>
+        {activity.topMover && (
+          <span>
+            top: <span class="text-ink">{activity.topMover.slug}</span>{' '}
+            <span class="text-green">+{activity.topMover.delta.toLocaleString()}</span>
+          </span>
+        )}
+      </p>
+    )
+  }
+
+  <details class="mt-2 report-body">
+    <summary class="cursor-pointer text-xs text-muted hover:text-accent">full report</summary>
+    <div class="mt-2">
+      <Content />
+    </div>
+  </details>
+</article>
+
+<style>
+  .report-body :global(h1) {
+    display: none;
+  }
+  .report-body :global(h2) {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.4rem;
+    color: var(--color-ink);
+  }
+  .report-body :global(p) {
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+    margin-bottom: 0.4rem;
+  }
+  .report-body :global(ul) {
+    font-size: 0.8125rem;
+    padding-left: 1.1rem;
+    list-style: disc;
+    margin-bottom: 0.4rem;
+  }
+  .report-body :global(table) {
+    width: 100%;
+    font-size: 0.8125rem;
+    border-collapse: collapse;
+    margin-bottom: 0.6rem;
+  }
+  .report-body :global(th),
+  .report-body :global(td) {
+    text-align: left;
+    padding: 0.2rem 0.5rem;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+  .report-body :global(th:last-child),
+  .report-body :global(td:last-child) {
+    text-align: right;
+  }
+  .report-body :global(a) {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .report-body :global(hr) {
+    display: none;
+  }
+</style>

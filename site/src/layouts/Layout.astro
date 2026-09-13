@@ -1,0 +1,95 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'ghistory' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta
+      name="description"
+      content="A daily, permanent record of how the GitHub ecosystem changes."
+    />
+
+    <!-- Resolves the theme before first paint. Inline and blocking on purpose:
+         deferring it means a flash of the wrong palette. -->
+    <script is:inline>
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch (e) {
+          /* private mode, or storage disabled */
+        }
+        var theme =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <slot />
+
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        var button = document.getElementById('theme-toggle');
+
+        function apply(theme) {
+          root.dataset.theme = theme;
+          if (button) {
+            button.setAttribute(
+              'aria-label',
+              theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
+            );
+          }
+        }
+
+        apply(root.dataset.theme === 'dark' ? 'dark' : 'light');
+
+        if (button) {
+          button.addEventListener('click', function () {
+            var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+            try {
+              localStorage.setItem('theme', next);
+            } catch (e) {
+              /* the choice just will not survive the tab */
+            }
+            apply(next);
+          });
+        }
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (event) {
+          var stored = null;
+          try {
+            stored = localStorage.getItem('theme');
+          } catch (e) {
+            /* ignore */
+          }
+          if (stored !== 'light' && stored !== 'dark') {
+            apply(event.matches ? 'dark' : 'light');
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

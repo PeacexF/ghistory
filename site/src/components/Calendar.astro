@@ -1,0 +1,80 @@
+---
+import type { CalendarMonth } from '../lib/calendar';
+
+interface Props {
+  months: CalendarMonth[];
+}
+
+const { months } = Astro.props;
+const weekdayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+function heatColor(level: 0 | 1 | 2 | 3 | 4): string {
+  return `var(--color-heat-${level})`;
+}
+
+function textColor(level: 0 | 1 | 2 | 3 | 4): string {
+  return level >= 3 ? 'var(--color-heat-text-strong)' : 'var(--color-heat-text)';
+}
+
+function title(day: {
+  date: string;
+  activity: { netStars: number; status: string } | null;
+}): string {
+  if (!day.activity) return day.date;
+  if (day.activity.status === 'failed') return `${day.date} — collection failed`;
+  const sign = day.activity.netStars >= 0 ? '+' : '';
+  return `${day.date} — ${sign}${day.activity.netStars.toLocaleString()} stars net`;
+}
+
+function monthAnchor(month: CalendarMonth): string {
+  return `#month-${month.year}-${String(month.month).padStart(2, '0')}`;
+}
+---
+
+<nav aria-label="Snapshot calendar" class="space-y-5 text-xs">
+  {
+    months.map((month) => (
+      <div>
+        <a
+          href={monthAnchor(month)}
+          class="mb-1.5 block font-medium text-ink hover:text-accent"
+        >
+          {month.label}
+        </a>
+        <div class="grid grid-cols-7 gap-1 mb-1">
+          {weekdayLabels.map((w) => (
+            <span class="text-center text-muted">{w}</span>
+          ))}
+        </div>
+        {month.weeks.map((week) => (
+          <div class="grid grid-cols-7 gap-1 mb-1">
+            {week.map((day) =>
+              day ? (
+                day.activity ? (
+                  <a
+                    href={`#${day.date}`}
+                    title={title(day)}
+                    class="aspect-square rounded-[3px] flex items-center justify-center text-[10px] font-medium tabular-nums hover:ring-2 hover:ring-accent"
+                    style={`background-color: ${heatColor(day.level)}; color: ${textColor(day.level)}`}
+                  >
+                    {day.day}
+                  </a>
+                ) : (
+                  <span
+                    title={day.date}
+                    class="aspect-square rounded-[3px] flex items-center justify-center text-[10px] tabular-nums"
+                    style={`background-color: ${heatColor(0)}; color: var(--color-muted)`}
+                  >
+                    {day.day}
+                  </span>
+                )
+              ) : (
+                <span class="aspect-square block" />
+              )
+            )}
+          </div>
+        ))}
+      </div>
+    ))
+  }
+</nav>
