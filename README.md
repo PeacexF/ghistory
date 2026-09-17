@@ -13,6 +13,8 @@
 
 [Browse the data](data) · [Read the reports](reports) · [Documentation](docs)
 
+Live at **[peacexf.github.io/ghistory](https://peacexf.github.io/ghistory/)**.
+
 </div>
 
 ---
