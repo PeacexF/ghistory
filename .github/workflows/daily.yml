@@ -27,6 +27,8 @@ jobs:
     name: collect and commit
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      committed: ${{ steps.commit.outputs.committed }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,6 +60,7 @@ jobs:
           ./run.sh "${args[@]}"
 
       - name: Commit
+        id: commit
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -66,9 +69,21 @@ jobs:
           git add data reports
           if git diff --cached --quiet; then
             echo "Nothing changed; no commit."
+            echo "committed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           git commit -m "data: ${OBSERVATION_DATE} snapshot"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: publish site
+    needs: collect
+    if: needs.collect.outputs.committed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/deploy-pages.yml

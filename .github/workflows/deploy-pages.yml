@@ -9,6 +9,9 @@ on:
       - "reports/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch: {}
+  # Pushes made with GITHUB_TOKEN (the daily snapshot commit) never fire the
+  # push trigger above, so daily.yml calls this workflow directly instead.
+  workflow_call: {}
 
 permissions:
   contents: read
